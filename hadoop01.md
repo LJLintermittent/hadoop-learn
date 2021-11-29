@@ -46,6 +46,7 @@ do
 
                 #6. 获取当前文件的名称
                 fname=$(basename $file)
+                # ssh免密登录
                 ssh $host "mkdir -p $pdir"
                 rsync -av $pdir/$fname $host:$pdir
             else
@@ -56,6 +57,24 @@ done
 ~~~
 
 chmod 777 xsync
+
+#### ssh免密登录
+
+ssh-keygen -t rsa :生成ras私钥和公钥
+
+ssh-copy-id hadoop02 配置hadoop02的免密登录
+
+#### 集群启动和停止
+
+1.整体启动和停止HDFSstart-dfs.sh / stop-dfs.sh
+
+2.整体启动和停止YARNstart-yarn.sh / stop-yarn.sh
+
+3.各个服务组件逐一启动或者停止
+
+1）分别启动和停止HDFS组件 hdfs --daemon start/stop namenode/datanode/secondarynamenode 
+
+2）启动停止YARN yarn --daemon start/stop resourcemanager/nodemanager
 
 
 
