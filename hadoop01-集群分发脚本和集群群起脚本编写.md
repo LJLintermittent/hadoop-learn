@@ -20,7 +20,7 @@ scp是把整个文件都拷贝过去，rsync是只对差异文件做更新
 
 #### 集群分发shell脚本
 
-~~~txt
+~~~shell
 #!/bin/bash
 
 #1. 判断参数个数
@@ -78,7 +78,7 @@ ssh-copy-id hadoop02 配置hadoop02的免密登录
 
 #### 集群群起群关脚本
 
-~~~txt
+~~~shell
 #!/bin/bash
 
 if [ $# -lt 1 ]
@@ -117,7 +117,7 @@ esac
 
 #### 群体jps脚本
 
-~~~txt
+~~~shell
 #!/bin/bash
 
 for host in hadoop01 hadoop02 hadoop03
