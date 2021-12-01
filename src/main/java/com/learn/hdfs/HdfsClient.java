@@ -101,7 +101,6 @@ public class HdfsClient {
                 System.out.println("目录：" + fileStatus.getPath().getName());
             }
         }
-
     }
 
 }
