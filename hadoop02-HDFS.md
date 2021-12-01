@@ -163,3 +163,13 @@ hdfs oiv -p XML -i fsimage_0000000000000000374 -o /opt/software/fsimage.xml
 hdfs oev -p XML -i edits_0000000000000000373-0000000000000000374 -o /opt/software/edits.xml
 ~~~
 
+#### datanode工作机制
+
+1.一个数据块在datanode上以文件形式存储在磁盘上，包括两个文件，一个是数据本身，一个是元数据包括数据块的长度，块数据的校验和 ，以及时间戳
+
+2.datanode启动后向namanode注册，通过后，周期性（6小时）的向namenode上报所有块信息
+
+3.心跳每三秒一次，心跳返回带有namenode给datanode的命令
+
+4.超过十分钟+30秒没有收到该datanode的心跳，即为不可用
+
