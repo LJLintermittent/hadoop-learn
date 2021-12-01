@@ -75,3 +75,91 @@ Edits：操作日志文件中记录了所有针对文件的创建，删除，重
 4、超出三个的其余副本，随机选择节点，chooseRandom()。
 ~~~
 
+~~~java
+多副本节点选择原理：
+    
+protected Node chooseTargetInOrder(int numOfReplicas, 
+                                 Node writer,
+                                 final Set<Node> excludedNodes,
+                                 final long blocksize,
+                                 final int maxNodesPerRack,
+                                 final List<DatanodeStorageInfo> results,
+                                 final boolean avoidStaleNodes,
+                                 final boolean newBlock,
+                                 EnumMap<StorageType, Integer> storageTypes)
+                                 throws NotEnoughReplicasException {
+    // 拿到所有的datanode存储信息的个数，根据这个个数判断有几个datanode（其实是n+1）比如numOfResults为0，表示只有本地模式
+    final int numOfResults = results.size();
+    if (numOfResults == 0) {
+        // 选择本地节点来存储
+      DatanodeStorageInfo storageInfo = chooseLocalStorage(writer,
+          excludedNodes, blocksize, maxNodesPerRack, results, avoidStaleNodes,
+          storageTypes, true);
+
+      writer = (storageInfo != null) ? storageInfo.getDatanodeDescriptor()
+                                     : null;
+
+      // 如果设置的副本数为0了，那么方法退出
+        if (--numOfReplicas == 0) {
+        return writer;
+      }
+    }
+    final DatanodeDescriptor dn0 = results.get(0).getDatanodeDescriptor();
+    // 如果numOfResults为1了，表示除了本地外还有一个节点
+    if (numOfResults <= 1) {
+        // 将这个远程节点作为副本保存block
+      chooseRemoteRack(1, dn0, excludedNodes, blocksize, maxNodesPerRack,
+          results, avoidStaleNodes, storageTypes);
+      if (--numOfReplicas == 0) {
+        return writer;
+      }
+    }
+    //三个节点的集群
+    if (numOfResults <= 2) {
+      final DatanodeDescriptor dn1 = results.get(1).getDatanodeDescriptor();
+      if (clusterMap.isOnSameRack(dn0, dn1)) {
+        chooseRemoteRack(1, dn0, excludedNodes, blocksize, maxNodesPerRack,
+            results, avoidStaleNodes, storageTypes);
+      } else if (newBlock){
+        chooseLocalRack(dn1, excludedNodes, blocksize, maxNodesPerRack,
+            results, avoidStaleNodes, storageTypes);
+      } else {
+        chooseLocalRack(writer, excludedNodes, blocksize, maxNodesPerRack,
+            results, avoidStaleNodes, storageTypes);
+      }
+      if (--numOfReplicas == 0) {
+        return writer;
+      }
+    }
+    chooseRandom(numOfReplicas, NodeBase.ROOT, excludedNodes, blocksize,
+        maxNodesPerRack, results, avoidStaleNodes, storageTypes);
+    return writer;
+  }
+~~~
+
+### HDFS读取数据流程
+
+1.客户端通过Distributed FileSystem向NameNode请求下载文件。
+
+2.namenode查询元数据，找到文件块block所在的datanode地址，返回目标文件的元数据
+
+3.挑选一台datanode，（就近选择，其次随机），请求读取数据
+
+4.datanode开始传输数据给客户端，（从磁盘里面读取数据流，以packet为单位做校验）
+
+5.客户端以packet为单位接收，先在本地缓存，然后写入目标文件
+
+#### FSimage和edits
+
+1.FSimage文件：HDFS文件系统元数据的一个永久性检查点，其中包含HDFS文件系统的所有目录和文件inode的序列化信息
+
+2.edits文件：存放HDFS文件系统的所有更新操作的路径，文件系统客户端执行的所有写操作首先会被记录到edits文件中
+
+~~~shell
+查看fsimage文件
+hdfs oiv -p XML -i fsimage_0000000000000000374 -o /opt/software/fsimage.xml
+
+查看edits文件
+hdfs oev -p XML -i edits_0000000000000000373-0000000000000000374 -o /opt/software/edits.xml
+~~~
+
