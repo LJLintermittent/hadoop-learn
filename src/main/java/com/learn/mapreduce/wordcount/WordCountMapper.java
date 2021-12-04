@@ -1,4 +1,4 @@
-package com.learn.mapreduce;
+package com.learn.mapreduce.wordcount;
 
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
