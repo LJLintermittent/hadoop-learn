@@ -1,4 +1,4 @@
-package com.learn.mapreduce.wordcount;
+package com.learn.mapreduce.partition;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -49,8 +49,9 @@ public class WordCountDriver {
         job.setMapOutputValueClass(IntWritable.class);
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(IntWritable.class);
+        job.setNumReduceTasks(2);
         FileInputFormat.setInputPaths(job, new Path("D:\\hadoop-learn\\input\\inputword"));
-        FileOutputFormat.setOutputPath(job, new Path("D:\\hadoop-learn\\output"));
+        FileOutputFormat.setOutputPath(job, new Path("D:\\hadoop-learn\\output\\test-partition2"));
         boolean result = job.waitForCompletion(true);
         System.exit(result ? 0 : 1);
     }

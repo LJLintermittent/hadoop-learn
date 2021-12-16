@@ -402,5 +402,37 @@ shuffle中的缓冲区大小会影响到mapreduce的执行效率， 原则上说
 
 缓冲区的大小可以通过参数调整，参数：mapreduce.task.io.sort.mb默认100M。
 
+### partition分区
 
+场景引出：要求将统计结果按照条件输出到不同文件中(分区)，比如：将统计结果按照手机归属地不同输出到不同的文件
+
+默认分区是hash分区
+
+~~~java
+public class HashPartitioner<K2, V2> implements Partitioner<K2, V2> {
+
+  public void configure(JobConf job) {}
+
+  /** Use {@link Object#hashCode()} to partition. */
+  public int getPartition(K2 key, V2 value,
+                          int numReduceTasks) {
+    return (key.hashCode() & Integer.MAX_VALUE) % numReduceTasks;
+  }
+
+}
+~~~
+
+默认分区是根据key的hashcode对reducetasks个数取模得到的，用户没法控制哪个key存储到哪个分区
+
+#### 自定义partition的步骤
+
+1.自定义类继承Partitioner，重写getPartition方法，来写控制分区的逻辑代码
+
+2.在job驱动中，设置自定义的partitioner
+
+3.自定义partition后，要根据自定义的partitioner的逻辑来设置相应数量的reducetask
+
+```java
+job.setNumReduceTasks(2);
+```
 
