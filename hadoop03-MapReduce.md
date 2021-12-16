@@ -380,5 +380,27 @@ combineTextInputFormat用于小文件过多的场景，他可以将小文件从�
 
 ![image](https://cdn.jsdelivr.net/gh/chen-xing/figure_bed_02/cdn/20211216142112513.png)
 
+shuffle过程只是从第七步开始到第16步结束。
+
+### shuffle机制
+
+1.maptask收集我们的map()方法输出的kv对，放到内存缓冲区中
+
+2.从内存缓冲区不断溢出本地磁盘文件，可能会溢出多个文件
+
+3.多个溢出文件会被合并成大的溢出文件
+
+4.在溢出过程以及合并的过程中，都要调用Partitioner进行分区和针对key进行排序
+
+5.reduceTask根据自己的分区号，去各个maptask机器上取相应的结果分区数据
+
+6.reducetask会抓取到同一个分区的来自不同的maptask的结果文件，reducetask会将这些文件再进行合并(归并排序)
+
+7.合并成大文件后，shuffle的过程也就结束了，后面进入reducetask的逻辑运算过程(从文件中取出一个一个的键值对group，调用用户自己定义的reduce方法
+
+shuffle中的缓冲区大小会影响到mapreduce的执行效率， 原则上说，缓冲区越大，磁盘io的次数越少，执行速度就越少
+
+缓冲区的大小可以通过参数调整，参数：mapreduce.task.io.sort.mb默认100M。
+
 
 
